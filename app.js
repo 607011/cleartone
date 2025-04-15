@@ -5,7 +5,7 @@ const gainNode = audioContext.createGain();
 let clearOscillator = null;
 let rawOscillator = null;
 let analyser = audioContext.createAnalyser();
-analyser.fftSize = 2048;
+analyser.fftSize = 4096;
 const bufferLength = analyser.fftSize;
 const timeDomainData = new Float32Array(bufferLength);
 const frequencyData = new Uint8Array(analyser.frequencyBinCount);
@@ -222,11 +222,19 @@ function play() {
     const waveformType = el.waveform.value;
     stopWave();
     playWave(frequency, waveformType, numHarmonics);
-    requestAnimationFrame(drawVisualizers);
+    animationFrameHandle = requestAnimationFrame(drawVisualizers);
 }
 
 function drawWave() {
     analyser.getFloatTimeDomainData(timeDomainData);
+    // Find a zero crossing to lock the phase
+    let startIndex = 0;
+    for (let i = 0; i < bufferLength - 1; i++) {
+        if (timeDomainData[i] < 0 && timeDomainData[i + 1] >= 0) {
+            startIndex = i;
+            break;
+        }
+    }
     waveformCtx.fillStyle = 'rgb(30, 36, 110)';
     waveformCtx.fillRect(0, 0, el.waveformCanvas.width, el.waveformCanvas.height);
     waveformCtx.lineWidth = 2;
@@ -234,8 +242,10 @@ function drawWave() {
     waveformCtx.beginPath();
     const sliceWidth = el.waveformCanvas.width * 1.0 / bufferLength;
     let x = 0;
-    for (let i = 0; i < bufferLength; ++i) {
-        const v = timeDomainData[i] * 0.5 + 0.5; // Normalize to 0-1 range
+    // Draw starting from the zero crossing
+    for (let i = 0; i < bufferLength; i++) {
+        const dataIndex = (startIndex + i) % bufferLength;
+        const v = timeDomainData[dataIndex] * 0.5 + 0.5;
         const y = el.waveformCanvas.height * (1 - v);
         if (i === 0) {
             waveformCtx.moveTo(x, y);

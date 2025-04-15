@@ -30,7 +30,7 @@
 
         main {
             display: flex;
-            flex-direction: row;
+            flex-direction: column;
             gap: 20px;
             align-items: flex-start;
             background-color: #ddd;
@@ -38,8 +38,21 @@
             border-radius: 8px;
         }
 
+        canvas {
+            border: 1px solid #bbb;
+            background-color: rgb(30, 36, 110);
+            border-radius: 8px;
+        }
+
+        .console {
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+            justify-content: space-between;
+        }
+
         @media (max-width: 600px) {
-            main {
+            .console {
                 flex-direction: column;
             }
         }
@@ -60,11 +73,18 @@
             margin: 0.5em 0;
             padding: 0.5em;
             border: 1px solid #bbb;
+            background-color: #eee;
             border-radius: 4px;
             width: 200px;
         }
 
+        input[type="checkbox"],
+        select {
+            cursor: pointer;
+        }
+
         label {
+            margin: 0.5em 0 0 0;
             font-weight: 600;
         }
 
@@ -87,35 +107,45 @@
 
 <body>
     <main>
-        <fieldset>
-            <legend>Instant Play</legend>
-            <label for="frequency">Frequency (Hz)</label>
-            <input type="number" name="frequency" id="frequency" placeholder="Frequency (Hz)" value="1000" min="1" max="20000">
-            <label for="harmonics"># Harmonics</label>
-            <input type="number" name="harmonics" id="harmonics" placeholder="Number of Harmonics" value="15" min="1" max="30">
-            <label for="waveform">Wave form</label>
-            <select id="waveform">
-                <option value="square">Square</option>
-                <option value="sawtooth">Sawtooth</option>
-                <option value="triangle">Triangle</option>
-            </select>
-            <label for="frequency">Volume (<span id="gain-value"></span> dB)</label>
-            <input type="range" name="gain" id="gain" placeholder="Volume (dB)" value="-3" min="-30" max="0" step="0.5">
-            <button id="play">Play</button>
-        </fieldset>
-        <fieldset>
-            <legend>Save to disk</legend>
-            <label for="duration">Duration (s)</label>
-            <input type="number" name="duration" id="duration" placeholder="Duration (s)" value="3">
-            <label for="sample-rate">Sample Rate</label>
-            <select id="sample-rate">
-                <option value="44100">44100 Hz</option>
-                <option value="48000">48000 Hz</option>
-                <option value="96000">96000 Hz</option>
-                <option value="192000">192000 Hz</option>
-            </select>
-            <button id="save">Save</button>
-        </fieldset>
+        <canvas id="waveform-canvas" width="600" height="100"></canvas>
+        <canvas id="fft-canvas" width="600" height="100"></canvas>
+        <div class="console">
+            <fieldset>
+                <legend>Instant Play</legend>
+                <label for="frequency">Frequency (Hz)</label>
+                <input type="number" name="frequency" id="frequency" placeholder="Frequency (Hz)" value="1000" min="1"
+                    max="20000">
+                <label for="harmonics"># Harmonics</label>
+                <input type="number" name="harmonics" id="harmonics" placeholder="Number of Harmonics" value="15"
+                    min="1" max="100">
+                <label for="waveform">Wave form</label>
+                <select id="waveform">
+                    <option value="square">Square</option>
+                    <option value="sawtooth">Sawtooth</option>
+                    <option value="triangle">Triangle</option>
+                </select>
+                <label for="frequency">Volume (<span id="gain-value"></span> dB)</label>
+                <input type="range" name="gain" id="gain" placeholder="Volume (dB)" value="-3" min="-30" max="0"
+                    step="0.5">
+                <label>Cleartone enabled
+                    <input type="checkbox" name="cleartone" id="cleartone" checked>
+                </label>
+                <button id="play">Play</button>
+            </fieldset>
+            <fieldset>
+                <legend>Save to disk</legend>
+                <label for="duration">Duration (s)</label>
+                <input type="number" name="duration" id="duration" placeholder="Duration (s)" value="3">
+                <label for="sample-rate">Sample Rate</label>
+                <select id="sample-rate">
+                    <option value="44100">44100 Hz</option>
+                    <option value="48000">48000 Hz</option>
+                    <option value="96000">96000 Hz</option>
+                    <option value="192000">192000 Hz</option>
+                </select>
+                <button id="save">Save</button>
+            </fieldset>
+        </div>
     </main>
 </body>
 

@@ -2,7 +2,7 @@ const fundamentalFrequency = 60;
 const el = {};
 const audioContext = new AudioContext;
 const gainNode = audioContext.createGain();
-let oscillator = null;
+let clearOscillator = null;
 let rawOscillator = null;
 let analyser = audioContext.createAnalyser();
 analyser.fftSize = 2048;
@@ -20,28 +20,15 @@ function setGainDbFS(node, dbFS) {
     node.gain.value = linearGain;
 }
 
-async function generateAndDownloadWave(frequency, waveformType, numHarmonics, duration, sampleRate) {
+async function generateAndDownloadWave() {
+    const sampleRate = parseInt(el.sampleRate.value, 10);
+    const duration = parseFloat(el.duration.value);
     const offlineAudioContext = new OfflineAudioContext(1, sampleRate * duration, sampleRate);
-
-    let periodicWave;
-    switch (waveformType.toLowerCase()) {
-        case 'square':
-            periodicWave = createSquareWavePeriodicWave(numHarmonics);
-            break;
-        case 'sawtooth':
-            periodicWave = createSawtoothWavePeriodicWave(numHarmonics);
-            break;
-        case 'triangle':
-            periodicWave = createTriangleWavePeriodicWave(numHarmonics);
-            break;
-        default:
-            console.error('Invalid waveform type.');
-            return;
-    }
-
-    const oscillator = createPeriodicWaveOscillator(offlineAudioContext, frequency, periodicWave.real, periodicWave.imag);
+    const oscillator = clearTone
+        ? createClearToneOscillator(offlineAudioContext, parseFloat(el.frequency.value), el.waveform.value, parseInt(el.harmonics.value, 10))
+        : createRawOscillator(offlineAudioContext, parseFloat(el.frequency.value), el.waveform.value);
     const gainNode = offlineAudioContext.createGain();
-    setGainDbFS(gainNode, -6);
+    setGainDbFS(gainNode, parseFloat(el.gain.value));
     oscillator.connect(gainNode);
     gainNode.connect(offlineAudioContext.destination);
     oscillator.start();
@@ -67,7 +54,7 @@ async function generateAndDownloadWave(frequency, waveformType, numHarmonics, du
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${waveformType}_${frequency}Hz_${numHarmonics}harmonics_${sampleRate}sps.wav`;
+        a.download = `${el.waveform.value}_${el.frequency.value}Hz_${el.harmonics.value}harmonics_${sampleRate}sps.wav`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -112,7 +99,6 @@ function createWaveFile(dataView, sampleRate, channels, bitsPerSample) {
     return buffer;
 }
 
-
 function createPeriodicWaveOscillator(audioCtx, frequency, realCoeffs, imagCoeffs) {
     const oscillator = audioCtx.createOscillator();
     const periodicWave = audioCtx.createPeriodicWave(realCoeffs, imagCoeffs);
@@ -150,80 +136,61 @@ function createTriangleWavePeriodicWave(numHarmonics) {
     return { real, imag };
 }
 
-function createSineOscillator(audioCtx, frequency) {
+function createRawOscillator(audioCtx, frequency, waveformType) {
     const oscillator = audioCtx.createOscillator();
-    oscillator.type = 'sine';
+    oscillator.type = waveformType;
     oscillator.frequency.value = frequency;
     return oscillator;
 }
 
-function createSquareOscillator(audioCtx, frequency) {
-    const oscillator = audioCtx.createOscillator();
-    oscillator.type = 'square';
-    oscillator.frequency.value = frequency;
-    return oscillator;
-}
-
-function createSawtoothOscillator(audioCtx, frequency) {
-    const oscillator = audioCtx.createOscillator();
-    oscillator.type = 'sawtooth';
-    oscillator.frequency.value = frequency;
-    return oscillator;
-}
-
-function createTriangleOscillator(audioCtx, frequency) {
-    const oscillator = audioCtx.createOscillator();
-    oscillator.type = 'triangle';
-    oscillator.frequency.value = frequency;
-    return oscillator;
-}
-
-function playWave(frequency, waveformType, numHarmonics) {
-    if (audioContext.state === 'suspended') {
-        audioContext.resume();
-    }
-    let periodicWave;
-    switch (waveformType.toLowerCase()) {
+function createClearToneOscillator(audioCtx, frequency, waveformType, numHarmonics) {
+    switch (waveformType) {
         case 'square':
             periodicWave = createSquareWavePeriodicWave(numHarmonics);
-            try {
-                rawOscillator.disconnect();
-            } catch (e) {
-                // Ignore error if not connected
-            }
-            rawOscillator = createSquareOscillator(audioContext, frequency);
             break;
         case 'sawtooth':
             periodicWave = createSawtoothWavePeriodicWave(numHarmonics);
-            try {
-                rawOscillator.disconnect();
-            } catch (e) {
-                // Ignore error if not connected
-            }
-            rawOscillator = createSawtoothOscillator(audioContext, frequency);
             break;
         case 'triangle':
             periodicWave = createTriangleWavePeriodicWave(numHarmonics);
-            try {
-                rawOscillator.disconnect();
-            } catch (e) {
-                // Ignore error if not connected
-            }
-            rawOscillator = createTriangleOscillator(audioContext, frequency);
             break;
         default:
             console.error('Invalid waveform type. Choose from "square", "sawtooth", or "triangle".');
             return;
     }
+    return createPeriodicWaveOscillator(audioCtx, frequency, periodicWave.real, periodicWave.imag);
+}
 
-    oscillator = createPeriodicWaveOscillator(audioContext, frequency, periodicWave.real, periodicWave.imag);
-    // (raw) oscillator -> gain -> analyser -> destination
-    oscillator.connect(gainNode);
+function createAndSetupClearToneOscillator(audioCtx) {
+    const frequency = parseFloat(el.frequency.value);
+    const numHarmonics = parseInt(el.harmonics.value, 10);
+    if (clearOscillator) {
+        clearOscillator.disconnect();
+        clearOscillator = null;
+    }
+    clearOscillator = createClearToneOscillator(audioCtx, frequency, el.waveform.value, numHarmonics);
+    clearOscillator.connect(gainNode);
+}
+
+function createAndSetupRawOscillator(audioCtx) {
+    if (rawOscillator) {
+        rawOscillator.disconnect();
+        rawOscillator = null;
+    }
+    rawOscillator = createRawOscillator(audioCtx, parseFloat(el.frequency.value), el.waveform.value);
     rawOscillator.connect(gainNode);
+}
+
+function playWave() {
+    if (audioContext.state === 'suspended') {
+        audioContext.resume();
+    }
+    createAndSetupRawOscillator(audioContext);
+    createAndSetupClearToneOscillator(audioContext);
     gainNode.connect(analyser);
     analyser.connect(audioContext.destination);
     if (clearTone) {
-        oscillator.start();
+        clearOscillator.start();
     }
     else {
         rawOscillator.start();
@@ -232,10 +199,10 @@ function playWave(frequency, waveformType, numHarmonics) {
 
 function stopWave() {
     if (clearTone) {
-        if (oscillator) {
-            oscillator.stop();
-            oscillator.disconnect();
-            oscillator = null;
+        if (clearOscillator) {
+            clearOscillator.stop();
+            clearOscillator.disconnect();
+            clearOscillator = null;
         }
     }
     else {
@@ -258,7 +225,7 @@ function play() {
     requestAnimationFrame(drawVisualizers);
 }
 
-function drawWaveform() {
+function drawWave() {
     analyser.getFloatTimeDomainData(timeDomainData);
     waveformCtx.fillStyle = 'rgb(30, 36, 110)';
     waveformCtx.fillRect(0, 0, el.waveformCanvas.width, el.waveformCanvas.height);
@@ -290,14 +257,14 @@ function drawFFT() {
     for (let i = 0; i < bufferLength; i++) {
         const normFrequency = frequencyData[i] / 255;
         const barHeight = normFrequency * el.fftCanvas.height;
-        fftCtx.fillStyle = `rgb(80, 102, 243)`;
+        fftCtx.fillStyle = `rgb(${normFrequency * 80}, ${normFrequency * 102}, ${normFrequency * 243})`;
         fftCtx.fillRect(x, el.fftCanvas.height - barHeight / 2, barWidth, barHeight / 2);
         x += barWidth + 1;
     }
 }
 
 function drawVisualizers() {
-    drawWaveform();
+    drawWave();
     drawFFT();
     animationFrameHandle = requestAnimationFrame(drawVisualizers);
 }
@@ -319,19 +286,24 @@ function main() {
     el.gain = document.querySelector('#gain');
     el.clearTone = document.querySelector('#cleartone');
     el.clearTone.addEventListener('input', e => {
-        clearTone = e.target.checked;
-        if (rawOscillator === null || oscillator === null)
-            return;
-        if (clearTone) {
+        if (!clearTone && rawOscillator !== null) {
             rawOscillator.stop();
-            console.debug('Raw oscillator disabled');
-            oscillator.start();
-            console.debug('ClearTone enabled');
-        } else {
-            oscillator.stop();
-            console.debug('ClearTone disabled');
-            rawOscillator.start();
-            console.debug('Raw oscillator enabled');
+            rawOscillator = null;
+        }
+        if (clearTone && clearOscillator !== null) {
+            clearOscillator.stop();
+            clearOscillator = null;
+        }
+        clearTone = e.target.checked;
+        if (el.play.textContent === 'Stop') {
+            if (clearTone) {
+                createAndSetupClearToneOscillator(audioContext);
+                clearOscillator.start();
+            }
+            else {
+                createAndSetupRawOscillator(audioContext);
+                rawOscillator.start();
+            }
         }
     });
     el.play.addEventListener('click', () => {
@@ -381,15 +353,7 @@ function main() {
             play();
         }
     });
-    el.save.addEventListener('click', () => {
-        generateAndDownloadWave(
-            parseFloat(el.frequency.value),
-            el.waveform.value,
-            parseInt(el.harmonics.value, 10),
-            parseFloat(el.duration.value),
-            parseInt(el.sampleRate.value, 10)
-        );
-    });
+    el.save.addEventListener('click', generateAndDownloadWave);
     el.frequency.value = fundamentalFrequency;
     el.harmonics.value = 15;
     el.waveform.value = 'square';

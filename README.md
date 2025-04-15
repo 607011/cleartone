@@ -2,4 +2,7 @@
 
 *Generate clear tones out of discontinous wave forms*
 
-<img width="593" alt="grafik" src="https://github.com/user-attachments/assets/661ea143-5701-4d98-aeec-539fd0e093f8" />
+**WIP**
+
+<img width="663" alt="grafik" src="https://github.com/user-attachments/assets/9c4d26a5-e30c-4741-b214-8177d5ad9e85" />
+

@@ -225,14 +225,21 @@ function play() {
     animationFrameHandle = requestAnimationFrame(drawVisualizers);
 }
 
+let previousStartIndex = 0;
+
 function drawWave() {
     analyser.getFloatTimeDomainData(timeDomainData);
     // Find a zero crossing to lock the phase
     let startIndex = 0;
-    for (let i = 0; i < bufferLength - 1; i++) {
+    let maxSlope = 0;
+    for (let i = 0; i < bufferLength - 1; ++i) {
         if (timeDomainData[i] < 0 && timeDomainData[i + 1] >= 0) {
-            startIndex = i;
-            break;
+            // Calculate slope at this zero crossing
+            const slope = timeDomainData[i + 1] - timeDomainData[i];
+            if (slope > maxSlope) {
+                maxSlope = slope;
+                startIndex = i;
+            }
         }
     }
     waveformCtx.fillStyle = 'rgb(30, 36, 110)';

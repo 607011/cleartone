@@ -4,5 +4,4 @@
 
 **WIP**
 
-<img width="663" alt="grafik" src="https://github.com/user-attachments/assets/9c4d26a5-e30c-4741-b214-8177d5ad9e85" />
-
+<img width="673" alt="grafik" src="https://github.com/user-attachments/assets/5bec471d-76b4-4981-82bf-3c3fa5468a1f" />

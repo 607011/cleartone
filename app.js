@@ -243,7 +243,10 @@ function stopWave() {
     }
     else {
         if (rawOscillator) {
-            rawOscillator.stop();
+            try {
+                rawOscillator.stop();
+            } catch (error) {
+            }
             rawOscillator.disconnect();
             rawOscillator = null;
         }
@@ -356,11 +359,11 @@ function main() {
     el.clearTone = document.querySelector('#cleartone');
     el.clearTone.addEventListener('input', e => {
         if (!clearTone && rawOscillator !== null) {
-            rawOscillator.stop();
+            rawOscillator.disconnect();
             rawOscillator = null;
         }
         if (clearTone && clearOscillator !== null) {
-            clearOscillator.stop();
+            clearOscillator.disconnect();
             clearOscillator = null;
         }
         clearTone = e.target.checked;

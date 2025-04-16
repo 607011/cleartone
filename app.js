@@ -184,8 +184,8 @@ async function createAndSetupClearToneOscillator(audioCtx) {
         const noiseColor = el.waveform.value.split('-')[0]; // Extract color like 'white' from 'white-noise'
         return createStochasticNoiseGenerator(audioCtx, noiseColor).then((oscillator) => {
             if (!oscillator) {
-                 console.error(`Failed to create ${noiseColor}-noise generator.`);
-                 return null; // Indicate failure
+                console.error(`Failed to create ${noiseColor}-noise generator.`);
+                return null; // Indicate failure
             }
             clearOscillator = oscillator;
             clearOscillator.connect(gainNode);
@@ -213,12 +213,9 @@ function playWave() {
     }
     gainNode.connect(analyser);
     analyser.connect(audioContext.destination);
-
-    // Create oscillators with proper Promise handling
     const oscillatorPromise = clearTone ?
         createAndSetupClearToneOscillator(audioContext) :
         createAndSetupRawOscillator(audioContext);
-
     oscillatorPromise.then(oscillator => {
         if (oscillator) {
             try {

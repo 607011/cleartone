@@ -143,8 +143,22 @@ function createRawOscillator(audioCtx, frequency, waveformType) {
     return oscillator;
 }
 
+async function createStochasticNoiseGenerator(audioContext, color) {
+    try {
+        await audioContext.audioWorklet.addModule('noise.js');
+        const noiseNode = new AudioWorkletNode(audioContext, `${color}-noise-processor`);
+        return noiseNode;
+    } catch (error) {
+        console.error('Error loading audio worklet:', error);
+        return null;
+    }
+}
+
 function createClearToneOscillator(audioCtx, frequency, waveformType, numHarmonics) {
     switch (waveformType) {
+        case 'sine':
+            periodicWave = createSquareWavePeriodicWave(1);
+            break;
         case 'square':
             periodicWave = createSquareWavePeriodicWave(numHarmonics);
             break;
@@ -161,15 +175,26 @@ function createClearToneOscillator(audioCtx, frequency, waveformType, numHarmoni
     return createPeriodicWaveOscillator(audioCtx, frequency, periodicWave.real, periodicWave.imag);
 }
 
-function createAndSetupClearToneOscillator(audioCtx) {
-    const frequency = parseFloat(el.frequency.value);
-    const numHarmonics = parseInt(el.harmonics.value, 10);
+async function createAndSetupClearToneOscillator(audioCtx) {
     if (clearOscillator) {
         clearOscillator.disconnect();
         clearOscillator = null;
     }
-    clearOscillator = createClearToneOscillator(audioCtx, frequency, el.waveform.value, numHarmonics);
+    if (el.waveform.value.includes('noise')) {
+        const noiseColor = el.waveform.value.split('-')[0]; // Extract color like 'white' from 'white-noise'
+        return createStochasticNoiseGenerator(audioCtx, noiseColor).then((oscillator) => {
+            if (!oscillator) {
+                 console.error(`Failed to create ${noiseColor}-noise generator.`);
+                 return null; // Indicate failure
+            }
+            clearOscillator = oscillator;
+            clearOscillator.connect(gainNode);
+            return clearOscillator;
+        });
+    }
+    clearOscillator = createClearToneOscillator(audioCtx, parseFloat(el.frequency.value), el.waveform.value, parseInt(el.harmonics.value, 10));
     clearOscillator.connect(gainNode);
+    return Promise.resolve(clearOscillator);
 }
 
 function createAndSetupRawOscillator(audioCtx) {
@@ -179,28 +204,42 @@ function createAndSetupRawOscillator(audioCtx) {
     }
     rawOscillator = createRawOscillator(audioCtx, parseFloat(el.frequency.value), el.waveform.value);
     rawOscillator.connect(gainNode);
+    return Promise.resolve(rawOscillator);
 }
 
 function playWave() {
     if (audioContext.state === 'suspended') {
         audioContext.resume();
     }
-    createAndSetupRawOscillator(audioContext);
-    createAndSetupClearToneOscillator(audioContext);
     gainNode.connect(analyser);
     analyser.connect(audioContext.destination);
-    if (clearTone) {
-        clearOscillator.start();
-    }
-    else {
-        rawOscillator.start();
-    }
+
+    // Create oscillators with proper Promise handling
+    const oscillatorPromise = clearTone ?
+        createAndSetupClearToneOscillator(audioContext) :
+        createAndSetupRawOscillator(audioContext);
+
+    oscillatorPromise.then(oscillator => {
+        if (oscillator) {
+            try {
+                oscillator.start();
+            } catch (error) {
+            }
+        } else {
+            console.error('Failed to create oscillator');
+        }
+    }).catch(error => {
+        console.error('Error creating oscillator:', error);
+    });
 }
 
 function stopWave() {
     if (clearTone) {
         if (clearOscillator) {
-            clearOscillator.stop();
+            try {
+                clearOscillator.stop();
+            } catch (error) {
+            }
             clearOscillator.disconnect();
             clearOscillator = null;
         }
@@ -269,12 +308,13 @@ function drawFFT() {
     analyser.getByteFrequencyData(frequencyData);
     fftCtx.fillStyle = 'rgb(30, 36, 110)';
     fftCtx.fillRect(0, 0, el.fftCanvas.width, el.fftCanvas.height);
-    const barWidth = (el.fftCanvas.width / bufferLength) * 2.5;
+    // const barWidth = (el.fftCanvas.width / bufferLength) * 2.5;
+    const barWidth = 1;
     let x = 0;
     for (let i = 0; i < bufferLength; i++) {
         const normFrequency = frequencyData[i] / 255;
         const barHeight = normFrequency * el.fftCanvas.height;
-        fftCtx.fillStyle = `rgb(${normFrequency * 80}, ${normFrequency * 102}, ${normFrequency * 243})`;
+        fftCtx.fillStyle = `rgb(80, 102, 243)`;
         fftCtx.fillRect(x, el.fftCanvas.height - barHeight / 2, barWidth, barHeight / 2);
         x += barWidth + 1;
     }
@@ -362,10 +402,6 @@ function main() {
         }
     });
     el.waveform.addEventListener('change', () => {
-        const waveformType = el.waveform.value;
-        if (!['square', 'sawtooth', 'triangle'].includes(waveformType)) {
-            el.waveform.value = 'square';
-        }
         if (el.play.textContent === 'Stop') {
             play();
         }

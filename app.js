@@ -264,8 +264,6 @@ function play() {
     animationFrameHandle = requestAnimationFrame(drawVisualizers);
 }
 
-let previousStartIndex = 0;
-
 function drawWave() {
     analyser.getFloatTimeDomainData(timeDomainData);
     // Find a zero crossing to lock the phase
@@ -283,6 +281,18 @@ function drawWave() {
     }
     waveformCtx.fillStyle = 'rgb(30, 36, 110)';
     waveformCtx.fillRect(0, 0, el.waveformCanvas.width, el.waveformCanvas.height);
+    waveformCtx.strokeStyle = 'rgb(58, 66, 148)';
+    waveformCtx.lineWidth = 1;
+    const halfHeight = el.waveformCanvas.height / 2;
+    for (let y = 0; y < halfHeight; y += halfHeight / 5) {
+        waveformCtx.beginPath();
+        waveformCtx.strokeStyle = (y === 0) ? 'rgb(114, 121, 203)' : 'rgb(58, 66, 148)';
+        waveformCtx.moveTo(0, y);
+        waveformCtx.lineTo(el.waveformCanvas.width, y);
+        waveformCtx.moveTo(0, y + halfHeight);
+        waveformCtx.lineTo(el.waveformCanvas.width, y + halfHeight);
+        waveformCtx.stroke();
+    }
     waveformCtx.lineWidth = 2;
     waveformCtx.strokeStyle = 'rgb(80, 102, 243)';
     waveformCtx.beginPath();
@@ -308,7 +318,14 @@ function drawFFT() {
     analyser.getByteFrequencyData(frequencyData);
     fftCtx.fillStyle = 'rgb(30, 36, 110)';
     fftCtx.fillRect(0, 0, el.fftCanvas.width, el.fftCanvas.height);
-    // const barWidth = (el.fftCanvas.width / bufferLength) * 2.5;
+    fftCtx.strokeStyle = 'rgb(58, 66, 148)';
+    fftCtx.lineWidth = 1;
+    fftCtx.beginPath();
+    for (let y = 0; y < el.fftCanvas.height; y += el.fftCanvas.height / 10) {
+        fftCtx.moveTo(0, y);
+        fftCtx.lineTo(el.fftCanvas.width, y);
+    }
+    fftCtx.stroke();
     const barWidth = 1;
     let x = 0;
     for (let i = 0; i < bufferLength; i++) {
@@ -326,12 +343,13 @@ function drawVisualizers() {
     animationFrameHandle = requestAnimationFrame(drawVisualizers);
 }
 
-
 function main() {
     el.waveformCanvas = document.querySelector('#waveform-canvas');
     waveformCtx = el.waveformCanvas.getContext('2d');
     el.fftCanvas = document.querySelector('#fft-canvas');
     fftCtx = el.fftCanvas.getContext('2d');
+    drawWave();
+    drawFFT();
     el.play = document.querySelector('button#play');
     el.frequency = document.querySelector('#frequency');
     el.harmonics = document.querySelector('#harmonics');

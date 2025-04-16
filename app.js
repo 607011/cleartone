@@ -261,21 +261,17 @@ function play() {
     animationFrameHandle = requestAnimationFrame(drawVisualizers);
 }
 
-function drawWave() {
-    analyser.getFloatTimeDomainData(timeDomainData);
-    // Find a zero crossing to lock the phase
-    let startIndex = 0;
-    let maxSlope = 0;
+function findZeroCrossing(timeDomainData) {
     for (let i = 0; i < bufferLength - 1; ++i) {
         if (timeDomainData[i] < 0 && timeDomainData[i + 1] >= 0) {
-            // Calculate slope at this zero crossing
-            const slope = timeDomainData[i + 1] - timeDomainData[i];
-            if (slope > maxSlope) {
-                maxSlope = slope;
-                startIndex = i;
-            }
+            return i;
         }
     }
+    return 0;
+}
+
+function drawWave() {
+    analyser.getFloatTimeDomainData(timeDomainData);
     waveformCtx.fillStyle = 'rgb(30, 36, 110)';
     waveformCtx.fillRect(0, 0, el.waveformCanvas.width, el.waveformCanvas.height);
     waveformCtx.strokeStyle = 'rgb(58, 66, 148)';
@@ -290,14 +286,16 @@ function drawWave() {
         waveformCtx.lineTo(el.waveformCanvas.width, y + halfHeight);
         waveformCtx.stroke();
     }
-    waveformCtx.lineWidth = 2;
+    if (!el.frequency) 
+        return;
+    waveformCtx.lineWidth = 1.5;
     waveformCtx.strokeStyle = 'rgb(80, 102, 243)';
     waveformCtx.beginPath();
-    const sliceWidth = el.waveformCanvas.width * 1.0 / bufferLength;
+    const sampleWidth = el.waveformCanvas.width / bufferLength;
+    const startIndex = findZeroCrossing(timeDomainData);
     let x = 0;
-    // Draw starting from the zero crossing
-    for (let i = 0; i < bufferLength; i++) {
-        const dataIndex = (startIndex + i) % bufferLength;
+    for (let i = startIndex; i < bufferLength; ++i) {
+        const dataIndex = i;
         const v = timeDomainData[dataIndex] * 0.5 + 0.5;
         const y = el.waveformCanvas.height * (1 - v);
         if (i === 0) {
@@ -305,9 +303,8 @@ function drawWave() {
         } else {
             waveformCtx.lineTo(x, y);
         }
-        x += sliceWidth;
+        x += sampleWidth;
     }
-    waveformCtx.lineTo(el.waveformCanvas.width, el.waveformCanvas.height / 2);
     waveformCtx.stroke();
 }
 

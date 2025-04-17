@@ -265,42 +265,40 @@ function play() {
 }
 
 function findZeroCrossing(timeDomainData) {
-    for (let i = 0; i < bufferLength - 1; ++i) {
-        if (timeDomainData[i] < 0 && timeDomainData[i + 1] >= 0) {
-            return i;
-        }
-    }
-    return 0;
-}
+    const index = timeDomainData.findIndex((value, i, arr) =>
+        i < arr.length - 1 && value < 0 && arr[i + 1] >= 0
+    );
+    return index === -1 ? 0 : index;
+};
 
 function drawWave() {
     analyser.getFloatTimeDomainData(timeDomainData);
+    const height = el.waveformCanvas.height;
+    const width = el.waveformCanvas.width;
     waveformCtx.fillStyle = 'rgb(30, 36, 110)';
-    waveformCtx.fillRect(0, 0, el.waveformCanvas.width, el.waveformCanvas.height);
+    waveformCtx.fillRect(0, 0, width, height);
     waveformCtx.strokeStyle = 'rgb(58, 66, 148)';
     waveformCtx.lineWidth = 1;
-    const halfHeight = el.waveformCanvas.height / 2;
+    const halfHeight = height / 2;
     for (let y = 0; y < halfHeight; y += halfHeight / 5) {
         waveformCtx.beginPath();
         waveformCtx.strokeStyle = (y === 0) ? 'rgb(114, 121, 203)' : 'rgb(58, 66, 148)';
         waveformCtx.moveTo(0, y);
-        waveformCtx.lineTo(el.waveformCanvas.width, y);
+        waveformCtx.lineTo(width, y);
         waveformCtx.moveTo(0, y + halfHeight);
-        waveformCtx.lineTo(el.waveformCanvas.width, y + halfHeight);
+        waveformCtx.lineTo(width, y + halfHeight);
         waveformCtx.stroke();
     }
-    if (!el.frequency) 
-        return;
     waveformCtx.lineWidth = 1.5;
     waveformCtx.strokeStyle = 'rgb(80, 102, 243)';
     waveformCtx.beginPath();
-    const sampleWidth = el.waveformCanvas.width / bufferLength;
+    const sampleWidth = width / bufferLength;
     const startIndex = findZeroCrossing(timeDomainData);
     let x = 0;
     for (let i = startIndex; i < bufferLength; ++i) {
         const dataIndex = i;
         const v = timeDomainData[dataIndex] * 0.5 + 0.5;
-        const y = el.waveformCanvas.height * (1 - v);
+        const y = height * (1 - v);
         if (i === 0) {
             waveformCtx.moveTo(x, y);
         } else {
@@ -313,23 +311,25 @@ function drawWave() {
 
 function drawFFT() {
     analyser.getByteFrequencyData(frequencyData);
+    const width = el.fftCanvas.width;
+    const height = el.fftCanvas.height;
     fftCtx.fillStyle = 'rgb(30, 36, 110)';
-    fftCtx.fillRect(0, 0, el.fftCanvas.width, el.fftCanvas.height);
+    fftCtx.fillRect(0, 0, width, height);
     fftCtx.strokeStyle = 'rgb(58, 66, 148)';
     fftCtx.lineWidth = 1;
     fftCtx.beginPath();
-    for (let y = 0; y < el.fftCanvas.height; y += el.fftCanvas.height / 10) {
+    for (let y = 0; y < height; y += height / 10) {
         fftCtx.moveTo(0, y);
-        fftCtx.lineTo(el.fftCanvas.width, y);
+        fftCtx.lineTo(width, y);
     }
     fftCtx.stroke();
     const barWidth = 1;
     let x = 0;
     for (let i = 0; i < bufferLength; i++) {
         const normFrequency = frequencyData[i] / 255;
-        const barHeight = normFrequency * el.fftCanvas.height;
+        const barHeight = normFrequency * height;
         fftCtx.fillStyle = `rgb(80, 102, 243)`;
-        fftCtx.fillRect(x, el.fftCanvas.height - barHeight / 2, barWidth, barHeight / 2);
+        fftCtx.fillRect(x, height - barHeight / 2, barWidth, barHeight / 2);
         x += barWidth + 1;
     }
 }

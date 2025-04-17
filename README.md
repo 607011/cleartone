@@ -1,4 +1,4 @@
-# ClearTone 🔊
+# Cleartone  ![Loudspeaker](static/images/icon-32.png)
 
 *Generate clear tones out of discontinous wave forms, and noise from stochastic processors*
 

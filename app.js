@@ -154,6 +154,17 @@ async function createStochasticNoiseGenerator(audioContext, color) {
     }
 }
 
+async function createPerfectWaveformGenerator(audioContext, name) {
+    try {
+        await audioContext.audioWorklet.addModule('perfect.js');
+        const node = new AudioWorkletNode(audioContext, `perfect-${name}-processor`);
+        return node;
+    } catch (error) {
+        console.error('Error loading audio worklet:', error);
+        return null;
+    }
+}
+
 function createClearToneOscillator(audioCtx, frequency, waveformType, numHarmonics) {
     switch (waveformType) {
         case 'sine':

@@ -30,6 +30,152 @@
             --font-size: 15pt;
         }
 
+        @media (prefers-color-scheme: light) {
+            body {
+                background-color: #f0f0f0;
+                color: #222;
+            }
+
+            main {
+                background-color: #ddd;
+            }
+
+            canvas {
+                border-color: #bbb;
+            }
+
+            input[type="number"],
+            input[type="text"],
+            select {
+                border-color: #bbb;
+                background-color: #eee;
+                color: #222;
+            }
+
+            fieldset {
+                border-color: #bbb;
+            }
+
+            button {
+                background-color: #bbb;
+                color: #222;
+            }
+            button:hover {
+                background-color: #aaa;
+            }
+            button:active {
+                background-color: #999;
+            }
+            button:focus {
+                outline: 2px solid #777;
+            }
+            button:focus-visible {
+                outline: 2px solid #555;
+            }
+            input[type="checkbox"] {
+                accent-color: #bbb;
+            }
+            input[type="checkbox"]:hover {
+                accent-color: #aaa;
+            }
+            input[type="checkbox"]:active {
+                accent-color: #999;
+            }
+            input[type="checkbox"]:focus {
+                outline: 2px solid #777;
+            }
+            input[type="checkbox"]:focus-visible {
+                outline: 2px solid #555;
+            }
+            input[type="range"] {
+                accent-color: #bbb;
+            }
+            input[type="range"]:hover {
+                accent-color: #aaa;
+            }
+            input[type="range"]:active {
+                accent-color: #999;
+            }
+            input[type="range"]:focus {
+                outline: 2px solid #777;
+            }
+            input[type="range"]:focus-visible {
+                outline: 2px solid #555;
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #101010;
+                color: #eee;
+            }
+
+            main {
+                background-color: #202020;
+            }
+
+            canvas {
+                border-color: #444;
+            }
+            input[type="number"],
+            input[type="text"],
+            select {
+                border-color: #444;
+                background-color: #222;
+                color: #eee;
+            }
+            fieldset {
+                border-color: #444;
+            }
+
+            button {
+                background-color: #444;
+                color: #eee;
+            }
+            button:hover {
+                background-color: #555;
+            }
+            button:active {
+                background-color: #666;
+            }
+            button:focus {
+                outline: 2px solid #888;
+            }
+            button:focus-visible {
+                outline: 2px solid #aaa;
+            }
+            input[type="checkbox"] {
+                accent-color: #444;
+            }
+            input[type="checkbox"]:hover {
+                accent-color: #555;
+            }
+            input[type="checkbox"]:active {
+                accent-color: #666;
+            }
+            input[type="checkbox"]:focus {
+                outline: 2px solid #888;
+            }
+            input[type="checkbox"]:focus-visible {
+                outline: 2px solid #aaa;
+            }
+            input[type="range"] {
+                accent-color: #444;
+            }
+            input[type="range"]:hover {
+                accent-color: #555;
+            }
+            input[type="range"]:active {
+                accent-color: #666;
+            }
+            input[type="range"]:focus {
+                outline: 2px solid #888;
+            }
+            input[type="range"]:focus-visible {
+                outline: 2px solid #aaa;
+            }
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
@@ -41,7 +187,6 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            background-color: #f0f0f0;
             font-family: var(--font);
             font-size: var(--font-size);
         }
@@ -51,14 +196,13 @@
             flex-direction: column;
             gap: 20px;
             align-items: flex-start;
-            background-color: #ddd;
             padding: 20px;
             border-radius: 8px;
         }
 
         canvas {
-            border: 1px solid #bbb;
-            background-color: rgb(30, 36, 110);
+            border-width: 1px;
+            border-style: solid;
             border-radius: 8px;
         }
 
@@ -90,8 +234,8 @@
             font-family: var(--font);
             margin: 0.5em 0;
             padding: 0.5em;
-            border: 1px solid #bbb;
-            background-color: #eee;
+            border-width: 1px;
+            border-style: solid;
             border-radius: 4px;
             width: 200px;
         }
@@ -107,7 +251,8 @@
         }
 
         fieldset {
-            border: 1px solid #bbb;
+            border-width: 1px;
+            border-style: solid;
             border-radius: 8px;
             padding: 1em;
             margin-bottom: 1em;

@@ -3,14 +3,14 @@
 source .env
 
 DIST=dist
-mkdir -p ${DIST}/static/images
 echo Copying files ...
-cp -r index.html app.js noise.js ${DIST}
+mkdir -p ${DIST}/static/images
 cp -r static/images ${DIST}/static/
 echo Minifying ...
-minify ${DIST}/index.html -o ${DIST}/index.html
-minify ${DIST}/app.js -o ${DIST}/app.js
-minify ${DIST}/noise.js -o ${DIST}/noise.js
+minify index.html -o ${DIST}/index.html
+minify static/css/default.css -o ${DIST}/static/css/default.css
+minify static/js/app.js -o ${DIST}/static/js/app.js
+minify static/js/noise.js -o ${DIST}/static/js/noise.js
 echo Optimizing images ...
 optipng -quiet -o7 ${DIST}/images/*.png
 echo Syncing to ${DST} ...

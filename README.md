@@ -1,4 +1,4 @@
-# Cleartone  ![Loudspeaker](static/images/icon-32.png)
+# Cleartone  <img width="80" height="80" alt="Logo" src="static/images/icon.svg">
 
 *Generate clear tones out of discontinuous waveforms and noise from stochastic processors*
 

@@ -268,3 +268,9 @@ fieldset legend {
     font-weight: 600;
     margin-bottom: 0.5em;
 }
+
+#dropArea {
+    border: 2px dashed #ccc;
+    padding: 50px;
+    text-align: center;
+  }

@@ -13,6 +13,7 @@ let waveformCtx = null;
 let fftCtx = null;
 let clearTone = true;
 let animationFrameHandle;
+let loadedWaveform = null;
 
 function setGainDbFS(node, dbFS) {
     // Convert dBFS to linear gain: gain = 10^(dBFS / 20)
@@ -336,7 +337,7 @@ function drawFFT() {
     fftCtx.stroke();
     const barWidth = 1;
     let x = 0;
-    for (let i = 0; i < bufferLength; i++) {
+    for (let i = 0; i < bufferLength; ++i) {
         const normFrequency = frequencyData[i] / 255;
         const barHeight = normFrequency * height;
         fftCtx.fillStyle = `rgb(80, 102, 243)`;
@@ -349,6 +350,29 @@ function drawVisualizers() {
     drawWave();
     drawFFT();
     animationFrameHandle = requestAnimationFrame(drawVisualizers);
+}
+
+function analyzeWaveform(audioBuffer) {
+    const source = audioContext.createBufferSource();
+    source.buffer = audioBuffer;
+    analyser = audioContext.createAnalyser();
+    source.connect(analyser);
+    source.connect(audioContext.destination);
+    source.start();
+    setTimeout(() => {
+        analyser.getByteFrequencyData(frequencyData);
+        // Find the fundamental frequency from the FFT data
+        const freqResolution = audioContext.sampleRate / analyser.fftSize;
+        const peakIndex = Array.from(frequencyData.slice(0, frequencyData.length / 2))
+            .reduce((maxIndex, value, index, arr) => {
+                return value > arr[maxIndex] ? index : maxIndex;
+            }, 0);
+        const fundamentalFreq = peakIndex * freqResolution;
+        el.frequency.value = fundamentalFreq;
+        source.disconnect();
+        drawWave();
+        drawFFT();
+    }, loadedWaveform.duration * 1000);
 }
 
 function main() {
@@ -437,6 +461,56 @@ function main() {
     el.harmonics.value = 15;
     el.waveform.value = 'square';
     el.clearTone.checked = clearTone;
+    el.dropArea = document.querySelector('#drop-area');
+    el.dropArea.addEventListener('dragover', e => {
+        e.preventDefault();
+        el.dropArea.style.backgroundColor = '#eee';
+    });
+    el.dropArea.addEventListener('dragleave', () => {
+        el.dropArea.style.backgroundColor = '';
+    });
+    el.dropArea.addEventListener('drop', e => {
+        e.preventDefault();
+        el.dropArea.style.backgroundColor = '';
+        const file = e.dataTransfer.files[0];
+        const supportedTypes = [
+            'audio/wav', 'audio/x-wav',
+            'audio/mpeg', 'audio/mp3',
+            'audio/ogg',
+            'audio/aac',
+            'audio/flac',
+            'audio/x-m4a'
+        ];
+        if (file && (supportedTypes.includes(file.type) || file.name.endsWith('.wav') || file.name.endsWith('.mp3') ||
+            file.name.endsWith('.ogg') || file.name.endsWith('.aac') || file.name.endsWith('.flac') || file.name.endsWith('.m4a'))) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const arrayBuffer = e.target.result;
+                audioContext.decodeAudioData(arrayBuffer)
+                    .then((audioBuffer) => {
+                        console.log('Audio file decoded successfully!', audioBuffer);
+                        loadedWaveform = audioBuffer;
+                        analyzeWaveform(audioBuffer);
+                    })
+                    .catch(error => {
+                        console.error('Error decoding audio file:', error);
+                        alert('Could not decode this audio file. Make sure it\'s a supported format.');
+                    });
+            };
+            reader.onerror = error => {
+                console.error('Error reading the file:', error);
+            };
+            reader.readAsArrayBuffer(file);
+        }
+        else {
+            alert('Please drop a supported audio file (WAV, MP3, OGG, AAC, FLAC).');
+        }
+    });
+    el.dropArea.querySelector('button').addEventListener('click', () => {
+        audioContext.resume().then(() => {
+            console.log('Playback resumed successfully');
+        });
+    });
 }
 
 window.addEventListener('load', main);

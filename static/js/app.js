@@ -5,7 +5,7 @@ const gainNode = audioContext.createGain();
 let clearOscillator = null;
 let rawOscillator = null;
 let analyser = audioContext.createAnalyser();
-analyser.fftSize = 8192;
+analyser.fftSize = 4096;
 const bufferLength = analyser.fftSize;
 const timeDomainData = new Float32Array(bufferLength);
 const frequencyData = new Uint8Array(analyser.frequencyBinCount);
@@ -219,26 +219,32 @@ function createAndSetupRawOscillator(audioCtx) {
     return Promise.resolve(rawOscillator);
 }
 
-function playWave() {
+function resumeAudioContext() {
     if (audioContext.state === 'suspended') {
-        audioContext.resume();
+        return audioContext.resume();
     }
-    gainNode.connect(analyser);
-    analyser.connect(audioContext.destination);
-    const oscillatorPromise = clearTone ?
-        createAndSetupClearToneOscillator(audioContext) :
-        createAndSetupRawOscillator(audioContext);
-    oscillatorPromise.then(oscillator => {
-        if (oscillator) {
-            try {
-                oscillator.start();
-            } catch (error) {
+    return Promise.resolve();
+}
+
+function playWave() {
+    resumeAudioContext().then(() => {
+        gainNode.connect(analyser);
+        analyser.connect(audioContext.destination);
+        const oscillatorPromise = clearTone ?
+            createAndSetupClearToneOscillator(audioContext) :
+            createAndSetupRawOscillator(audioContext);
+        oscillatorPromise.then(oscillator => {
+            if (oscillator) {
+                try {
+                    oscillator.start();
+                } catch (error) {
+                }
+            } else {
+                console.error('Failed to create oscillator');
             }
-        } else {
-            console.error('Failed to create oscillator');
-        }
-    }).catch(error => {
-        console.error('Error creating oscillator:', error);
+        }).catch(error => {
+            console.error('Error creating oscillator:', error);
+        });
     });
 }
 
@@ -487,8 +493,7 @@ function main() {
             reader.onload = e => {
                 const arrayBuffer = e.target.result;
                 audioContext.decodeAudioData(arrayBuffer)
-                    .then((audioBuffer) => {
-                        console.log('Audio file decoded successfully!', audioBuffer);
+                    .then(audioBuffer => {
                         loadedWaveform = audioBuffer;
                         analyzeWaveform(audioBuffer);
                     })
@@ -505,10 +510,15 @@ function main() {
         else {
             alert('Please drop a supported audio file (WAV, MP3, OGG, AAC, FLAC).');
         }
+
     });
-    el.dropArea.querySelector('button').addEventListener('click', () => {
-        audioContext.resume().then(() => {
-            console.log('Playback resumed successfully');
+    const splashScreen = document.querySelector('#splash-screen');
+    splashScreen.showModal();
+    splashScreen.querySelector('button').addEventListener('click', () => {
+        resumeAudioContext().then(() => {
+            splashScreen.close();
+        }).catch(error => {
+            console.error('Error resuming audio context:', error);
         });
     });
 }

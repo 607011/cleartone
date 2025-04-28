@@ -269,8 +269,31 @@ fieldset legend {
     margin-bottom: 0.5em;
 }
 
-#dropArea {
-    border: 2px dashed #ccc;
-    padding: 50px;
+#drop-area {
+    border: 2px dashed #444;
+    border-radius: 8px;
+    width: 100%;
+    min-height: 10vh;
+    padding: 10px;
+    font-style: italic;
     text-align: center;
-  }
+}
+
+dialog {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 10px;
+}
+
+dialog:not([open]) {
+    display: none;
+}
+
+dialog::backdrop {
+    background-color: rgba(0, 0, 0, 0.5);
+}

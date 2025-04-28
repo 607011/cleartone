@@ -79,13 +79,22 @@
                 </select>
                 <button id="save">Save</button>
             </fieldset>
-            <fieldset id="drop-area">
+            <fieldset>
                 <legend>Analyze</legend>
-                Drop a WAV file here to recreate the sound
-                <button>Interact</button>
+                <div id="drop-area">
+                    Drop an audio file here to recreate the sound
+                </div>
+                <button id="play-file">Play</button>
             </fieldset>
         </div>
     </main>
+    <dialog id="splash-screen">
+        <div class="splash-screen">
+            <h1>Cleartone</h1>
+            <p>Generate clear-sounding tones from discontinuous waveforms and noise from stochastic processors</p>
+            <button>Close</button>
+        </div>
+    </dialog>
 </body>
 
 </html>
